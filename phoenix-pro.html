@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Dla Ciebie ❤️</title>
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    color: #fff;
+  }
+
+  h1 { text-align: center; margin: 15px 0 5px; }
+  #score { text-align: center; font-size: 20px; margin-bottom: 5px; }
+  #levelText { text-align: center; font-size: 18px; margin-bottom: 10px; }
+  #game { position: relative; width: 100vw; height: 80vh; overflow: hidden; }
+
+  #player {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    background-image: url('images/Gemini_Generated_Image_ex3dxjex3dxjex3d-removebg-preview.png');
+    background-size: cover;
+    image-rendering: pixelated;
+    left: 50%;
+    top: 50%;
+    transition: transform 0.2s;
+  }
+
+  .heart {
+    position: absolute;
+    font-size: 28px;
+    transition: top linear;
+  }
+
+  #levelBanner {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 40%;
+    font-size: 48px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 2px 2px 10px #000;
+    display: none;
+  }
+
+  #endScreen {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  #endScreen h2 { font-size: 32px; margin-bottom: 20px; }
+  #endScreen p { font-size: 20px; line-height: 1.6; }
+
+  button {
+    margin-top: 25px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    background: #ff7eb3;
+    color: #fff;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>Dla mojego chłopaka ❤️</h1>
+<div id="score">Zebrane serca: 0</div>
+<div id="levelText">Poziom 1</div>
+<div id="game">
+  <div id="player"></div>
+  <div id="levelBanner"></div>
+</div>
+
+<div id="endScreen">
+  <h2>Kocham Cię ❤️</h2>
+  <p>
+    Gratulacje!<br>
+    Ukończyłeś wszystkie poziomy!<br>
+    <strong>kocham mojego maluszka</strong> 🐰💖
+  </p>
+  <button onclick="location.reload()">Zagraj jeszcze raz</button>
+</div>
+
+<script>
+const player = document.getElementById("player");
+const game = document.getElementById("game");
+const scoreText = document.getElementById("score");
+const levelText = document.getElementById("levelText");
+const levelBanner = document.getElementById("levelBanner");
+const endScreen = document.getElementById("endScreen");
+
+let x = window.innerWidth / 2;
+let y = window.innerHeight / 2;
+const speed = 20;
+
+
+document.addEventListener("keydown", e => {
+    if(e.key === "ArrowLeft") x -= speed;
+    if(e.key === "ArrowRight") x += speed;
+    if(e.key === "ArrowUp") y -= speed;
+    if(e.key === "ArrowDown") y += speed;
+
+    x = Math.max(0, Math.min(window.innerWidth - 150, x));
+    y = Math.max(0, Math.min(window.innerHeight - 150, y));
+
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+});
+
+
+function playBeep(frequency = 440, duration = 100) {
+  const context = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = context.createOscillator();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+  oscillator.connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + duration / 1000);
+}
+
+
+const levelParams = {
+    1: { target: 30, spawn: 1, speed: 2 },
+    2: { target: 30, spawn: 2, speed: 3 },
+    3: { target: 30, spawn: 3, speed: 4 }
+};
+
+let currentLevel = 1;
+let levelScore = 0; 
+let hearts = []; 
+
+function updateLevelBanner(level) {
+    levelBanner.textContent = "Poziom " + level;
+    levelBanner.style.display = "block";
+    setTimeout(() => { levelBanner.style.display = "none"; }, 1500);
+}
+
+function spawnHeart() {
+    const heart = document.createElement("div");
+    heart.className = "heart";
+
+    if(Math.random() < 0.1){
+        heart.textContent = "💛";
+        heart.dataset.points = 5;
+    } else {
+        heart.textContent = "❤️";
+        heart.dataset.points = 1;
+    }
+
+    const size = 20 + Math.random()*30;
+    heart.style.fontSize = size + "px";
+    heart.style.left = Math.random() * (window.innerWidth - size) + "px";
+    heart.style.top = "-50px";
+
+    game.appendChild(heart);
+    hearts.push(heart);
+
+   const fall = setInterval(() => {
+    heart.style.top = parseFloat(heart.style.top) + levelParams[currentLevel].speed + "px";
+
+   if(parseFloat(heart.style.top) > window.innerHeight){
+    heart.remove();
+   clearInterval(fall);
+   hearts = hearts.filter(h => h !== heart);
+   }
+
+   const p = player.getBoundingClientRect();
+   const h = heart.getBoundingClientRect();
+   if(p.left < h.right && p.right > h.left && p.top < h.bottom && p.bottom > h.top){
+   levelScore += parseInt(heart.dataset.points);
+    scoreText.textContent = "Zebrane serca: " + levelScore;
+
+    player.style.transform = "scale(1.2)";
+    setTimeout(() => { player.style.transform = "scale(1)"; }, 200);
+
+   if(heart.dataset.points == 5) playBeep(880, 150);
+   else playBeep(440, 100);
+
+    heart.remove();
+    clearInterval(fall);
+   hearts = hearts.filter(h => h !== heart);
+    if(levelScore >= levelParams[currentLevel].target){
+    if(currentLevel < 3){
+    
+    currentLevel++;
+   levelScore = 0;
+   scoreText.textContent = "Zebrane serca: " + levelScore;
+    levelText.textContent = "Poziom " + currentLevel;
+   updateLevelBanner(currentLevel);
+
+  
+   hearts.forEach(h => h.remove());
+   hearts = [];
+   } else {
+   
+   endScreen.style.display = "flex";
+  }
+    }
+  }
+
+    }, 20);
+}
+
+
+setInterval(() => {
+    for(let i=0; i<levelParams[currentLevel].spawn; i++){
+        spawnHeart();
+    }
+}, 1000);
+
+</script>
+</body>
+</html>
